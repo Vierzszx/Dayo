@@ -22,13 +22,13 @@ abstract class CrudController extends Controller
 
     protected function seller()
     {
-        abort_unless(auth()->user()->peran === 'penjual', 403);
+        abort_unless(auth()->user()->peran === 'seller', 403);
     }
 
     protected function owner($item)
     {
         $owner = match ($this->resource) {
-            'toko' => $item->user_id,'produk' => $item->toko->user_id,'penawaran' => $item->produk->toko->user_id
+            'toko' => $item->pengguna_id,'produk' => $item->toko->pengguna_id,'penawaran' => $item->produk->toko->pengguna_id
         };
         abort_unless($owner === auth()->id(), 403);
     }
@@ -36,9 +36,19 @@ abstract class CrudController extends Controller
     protected function options()
     {
         return match ($this->resource) {
-            'produk' => ['toko_id' => Toko::where('user_id', auth()->id())->pluck('nama_toko', 'id')],
-            'penawaran' => ['produk_id' => Produk::whereHas('toko', fn ($q) => $q->where('user_id', auth()->id()))->pluck('nama_produk', 'id')],
-            default => []
+            'produk' => [
+                'toko_id' => Toko::where('pengguna_id', auth()->id())
+                    ->pluck('nama_toko', 'toko_id'),
+            ],
+    
+            'penawaran' => [
+                'produk_id' => Produk::whereHas(
+                    'toko',
+                    fn ($q) => $q->where('pengguna_id', auth()->id())
+                )->pluck('nama_produk', 'produk_id'),
+            ],
+    
+            default => [],
         };
     }
 
@@ -46,18 +56,18 @@ abstract class CrudController extends Controller
     {
         $data = $request->validate($this->rules);
         if ($this->resource === 'toko') {
-            $data['user_id'] = auth()->id();
+            $data['pengguna_id'] = auth()->id();
         }
         if ($this->resource === 'produk') {
             $toko = Toko::findOrFail($data['toko_id']);
-            abort_unless($toko->user_id === auth()->id(), 403);
+            abort_unless($toko->pengguna_id === auth()->id(), 403);
             if ($item && $item->penawaran()->exists() && $data['toko_id'] != $item->toko_id) {
                 throw ValidationException::withMessages(['toko_id' => 'Produk yang memiliki penawaran tidak boleh dipindahkan toko.']);
             }
         }
         if ($this->resource === 'penawaran') {
             $produk = Produk::with('toko')->findOrFail($data['produk_id']);
-            abort_unless($produk->toko->user_id === auth()->id(), 403);
+            abort_unless($produk->toko->pengguna_id === auth()->id(), 403);
             if ($data['harga_diskon'] > $produk->harga_normal) {
                 throw ValidationException::withMessages(['harga_diskon' => 'Harga diskon tidak boleh melebihi harga normal.']);
             }
@@ -74,17 +84,17 @@ abstract class CrudController extends Controller
         $q = ($this->model)::query();
         if ($this->resource === 'penawaran') {
             $q->with('produk.toko');
-            if (auth()->user()->peran === 'pembeli') {
+            if (auth()->user()->peran === 'buyer') {
                 $q->where('stok', '>', 0)->where('batas_pengambilan', '>', now());
             } else {
-                $q->whereHas('produk.toko', fn ($q) => $q->where('user_id', auth()->id()));
+                $q->whereHas('produk.toko', fn ($q) => $q->where('pengguna_id', auth()->id()));
             }
         } else {
             $this->seller();
             if ($this->resource === 'toko') {
-                $q->where('user_id', auth()->id());
+                $q->where('pengguna_id', auth()->id());
             } else {
-                $q->whereHas('toko', fn ($q) => $q->where('user_id', auth()->id()));
+                $q->whereHas('toko', fn ($q) => $q->where('pengguna_id', auth()->id()));
             }
         }
 
@@ -120,7 +130,7 @@ abstract class CrudController extends Controller
     public function show(string $id)
     {
         $item = ($this->model)::findOrFail($id);
-        if ($this->resource === 'penawaran' && auth()->user()->peran === 'pembeli') {
+        if ($this->resource === 'penawaran' && auth()->user()->peran === 'buyer') {
             abort_unless($item->stok > 0 && $item->batas_pengambilan->isFuture(), 404);
         } else {
             $this->seller();

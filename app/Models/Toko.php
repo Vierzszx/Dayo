@@ -8,15 +8,31 @@ class Toko extends Model
 {
     protected $table = 'toko';
 
-    protected $fillable = ['user_id', 'nama_toko', 'alamat', 'kontak', 'jam_operasional'];
+    protected $primaryKey = 'toko_id';
+
+    protected $fillable = [
+        'pengguna_id',
+        'nama_toko',
+        'deskripsi',
+        'titik_pengambilan',
+        'nomor_whatsapp',
+    ];
 
     public function pemilik()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(
+            User::class,
+            'pengguna_id',
+            'pengguna_id'
+        );
     }
 
     public function produk()
     {
-        return $this->hasMany(Produk::class, 'toko_id');
+        return $this->hasMany(
+            Produk::class,
+            'toko_id',
+            'toko_id'
+        );
     }
 }

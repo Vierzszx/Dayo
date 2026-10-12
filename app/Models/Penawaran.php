@@ -8,17 +8,37 @@ class Penawaran extends Model
 {
     protected $table = 'penawaran';
 
-    protected $fillable = ['produk_id', 'harga_diskon', 'stok', 'mulai_pengambilan', 'batas_pengambilan'];
+    protected $primaryKey = 'penawaran_id';
 
-    protected $casts = ['mulai_pengambilan' => 'datetime', 'batas_pengambilan' => 'datetime'];
+    protected $fillable = [
+        'produk_id',
+        'harga_diskon',
+        'stok',
+        'waktu_mulai',
+        'batas_pengambilan',
+        'status',
+    ];
+
+    protected $casts = [
+        'waktu_mulai' => 'datetime',
+        'batas_pengambilan' => 'datetime',
+    ];
 
     public function produk()
     {
-        return $this->belongsTo(Produk::class);
+        return $this->belongsTo(
+            Produk::class,
+            'produk_id',
+            'produk_id'
+        );
     }
 
     public function pesanan()
     {
-        return $this->hasMany(Pesanan::class, 'penawaran_id');
+        return $this->hasMany(
+            Pesanan::class,
+            'penawaran_id',
+            'penawaran_id'
+        );
     }
 }
