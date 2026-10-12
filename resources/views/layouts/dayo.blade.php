@@ -1,13 +1,11 @@
 {{--
-    layouts/dayo.blade.php - layout induk Dayo.
-    Navigasi: Penawaran, Pesanan, nama pengguna, Logout; menu Toko & Produk khusus penjual.
-    Aman jika rute belum ada (Route::has). Peran dibaca dari auth()->user()->role.
+    layouts/dayo.blade.php - layout induk Dayo (satu-satunya layout aplikasi).
+    Mengikuti backend: kolom pengguna `nama` & `peran` (buyer/seller), flash `success`,
+    dan nama rute dari routes/web.php.
 --}}
 @php
     $user     = auth()->user();
-    $peran    = $peran ?? (optional($user)->role === 'penjual' ? 'penjual' : 'pembeli'); // SESUAIKAN kolom role
-    $namaUser = $namaUser ?? optional($user)->name;
-    $r = fn ($nama) => Route::has($nama) ? route($nama) : '#';
+    $isSeller = $user && $user->peran === 'seller';
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -24,30 +22,32 @@
     <div class="container navbar__isi">
         <a href="{{ url('/') }}" class="navbar__logo">Dayo</a>
         <nav class="navbar__menu">
-            <a href="{{ $r('penawaran.index') }}">Penawaran</a>
-            <a href="{{ $r('pesanan.index') }}">Pesanan</a>
-            @if ($peran === 'penjual')
-                <a href="{{ $r('toko.index') }}">Toko</a>
-                <a href="{{ $r('produk.index') }}">Produk</a>
-            @endif
+            @auth
+                <a href="{{ route('penawaran.index') }}">Penawaran</a>
+                <a href="{{ route('pesanan.index') }}">Pesanan</a>
+                @if ($isSeller)
+                    <a href="{{ route('toko.index') }}">Toko</a>
+                    <a href="{{ route('produk.index') }}">Produk</a>
+                @endif
+            @endauth
         </nav>
         <div class="navbar__user">
-            @if ($namaUser)
-                <span>{{ $namaUser }}</span>
-                <form method="POST" action="{{ $r('logout') }}">@csrf
+            @auth
+                <span>{{ $user->nama }}</span>
+                <form method="POST" action="{{ route('logout') }}">@csrf
                     <button type="submit" class="btn btn--peach">Logout</button>
                 </form>
             @else
-                <a href="{{ $r('login') }}" class="btn btn--peach">Login</a>
-            @endif
+                <a href="{{ route('login') }}" class="btn btn--peach">Login</a>
+                <a href="{{ route('register') }}" class="btn btn--peach">Daftar</a>
+            @endauth
         </div>
     </div>
 </header>
 
 <main class="container halaman">
-    {{-- Notifikasi: backend cukup memakai ->with('sukses', '...') atau ->with('error', '...') --}}
-    @if (session('sukses')) <div class="alert alert--sukses">{{ session('sukses') }}</div> @endif
-    @if (session('error'))  <div class="alert alert--galat">{{ session('error') }}</div> @endif
+    {{-- Notifikasi dari backend: ->with('success', '...') dan error validasi ($errors) --}}
+    @if (session('success')) <div class="alert alert--sukses">{{ session('success') }}</div> @endif
     @if ($errors->any())
         <div class="alert alert--galat">Periksa kembali isian Anda:
             <ul>@foreach ($errors->all() as $e) <li>{{ $e }}</li> @endforeach</ul>

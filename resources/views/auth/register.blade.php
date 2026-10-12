@@ -1,80 +1,30 @@
-@extends('layouts.app')
-
-@section('content')
-    <h1>Daftar akun</h1>
-
-    <form class="form" method="POST" action="{{ route('register') }}">
+{{-- Daftar. Backend: nama, email, password, password_confirmation, peran (buyer|seller). --}}
+@extends('layouts.dayo')
+@section('judul', 'Daftar')
+@section('konten')
+<div class="sempit">
+    <h1 class="judul-halaman">Daftar akun</h1>
+    <form method="POST" action="{{ route('register') }}" class="panel">
         @csrf
+        <label for="nama">Nama</label>
+        <input type="text" id="nama" name="nama" class="input" value="{{ old('nama') }}" required maxlength="100" autocomplete="name">
 
-        <label>
-            Nama
-            <input
-                type="text"
-                name="nama"
-                value="{{ old('nama') }}"
-                required
-                maxlength="100"
-                autocomplete="name"
-            >
-        </label>
+        <label>Daftar sebagai</label>
+        <div class="pilihan">
+            <label><input type="radio" name="peran" value="buyer" @checked(old('peran', 'buyer') === 'buyer')> Pembeli</label>
+            <label><input type="radio" name="peran" value="seller" @checked(old('peran') === 'seller')> Penjual</label>
+        </div>
 
-        <label>
-            Peran
-            <select name="peran" required>
-                <option
-                    value="buyer"
-                    @selected(old('peran', 'buyer') === 'buyer')
-                >
-                    Pembeli
-                </option>
-
-                <option
-                    value="seller"
-                    @selected(old('peran') === 'seller')
-                >
-                    Penjual
-                </option>
-            </select>
-        </label>
-
-        <label>
-            Email
-            <input
-                type="email"
-                name="email"
-                value="{{ old('email') }}"
-                required
-                autocomplete="email"
-            >
-        </label>
-
-        <label>
-            Password
-            <input
-                type="password"
-                name="password"
-                required
-                minlength="8"
-                autocomplete="new-password"
-            >
-        </label>
-
-        <label>
-            Konfirmasi password
-            <input
-                type="password"
-                name="password_confirmation"
-                required
-                minlength="8"
-                autocomplete="new-password"
-            >
-        </label>
-
-        <button type="submit">Daftar</button>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" class="input" value="{{ old('email') }}" required autocomplete="email">
+        <label for="password">Password (minimal 8 karakter)</label>
+        <input type="password" id="password" name="password" class="input" required minlength="8" autocomplete="new-password">
+        <label for="password_confirmation">Konfirmasi password</label>
+        <input type="password" id="password_confirmation" name="password_confirmation" class="input" required minlength="8" autocomplete="new-password">
+        <div class="baris-aksi">
+            <button type="submit" class="btn btn--utama btn--lebar">Daftar</button>
+        </div>
     </form>
-
-    <p>
-        Sudah punya akun?
-        <a href="{{ route('login') }}">Login</a>
-    </p>
+    <p class="teks-tengah teks-lembut">Sudah punya akun? <a href="{{ route('login') }}" class="tautan-aksi">Login</a></p>
+</div>
 @endsection

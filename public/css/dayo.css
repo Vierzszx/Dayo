@@ -158,3 +158,13 @@ label { display: block; font-weight: 500; font-size: .9rem; margin: 1rem 0 .4rem
 .preview { max-width: 220px; border-radius: 12px; margin-top: .75rem; }
 .teks-tengah { text-align: center; margin-top: 1.25rem; }
 textarea.input { min-height: 110px; resize: vertical; }
+
+/* 12) TAMBAHAN integrasi backend: paginasi, status pesanan/penawaran, foto kosong */
+.paginasi { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+.badge--pending      { background: #fdf3c7; color: #8a5a00; }
+.badge--siap_diambil { background: #f1e3fb; color: #7e22ce; }
+.badge--kadaluwarsa, .badge--kedaluwarsa { background: #e5e7eb; color: #4b5563; }
+.badge--aktif        { background: #d9f7e4; color: #15803d; }
+.badge--habis        { background: #fde2e2; color: var(--merah); }
+.kartu__gambar--kosong, .thumb--kosong { background: var(--peach); }
+.teks-kode { font-family: ui-monospace, monospace; letter-spacing: .08em; font-weight: 700; }

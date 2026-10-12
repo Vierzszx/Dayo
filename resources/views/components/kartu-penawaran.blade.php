@@ -1,32 +1,36 @@
 {{--
-    Kartu penawaran (array atau model). Tombol: Detail dan Pesan (Pesan nonaktif jika tidak tersedia).
-    Field: id, nama, toko_nama, harga_normal, harga_diskon, stok, batas_pengambilan, foto
+    Kartu penawaran. Prop $p = model App\Models\Penawaran (relasi produk.toko sudah di-load controller).
+    Pemetaan ke backend: nama = produk->nama_produk, toko = produk->toko->nama_toko,
+    harga_normal = produk->harga_normal, foto = produk->foto (disk public).
 --}}
 @props(['p', 'tampilTanggal' => false])
 @php
-    $p = is_array($p) ? (object) $p : $p;
-    $namaToko = $p->toko_nama ?? optional($p->toko ?? null)->nama ?? '';
-    $foto  = \Illuminate\Support\Str::startsWith($p->foto ?? '', ['http', '/']) ? $p->foto : asset('storage/'.($p->foto ?? ''));
-    $batas = \Carbon\Carbon::parse($p->batas_pengambilan);
-    $tersedia = $p->stok > 0 && now()->lt($batas);   // masih ada stok & belum lewat batas
+    $namaProduk = $p->produk->nama_produk;
+    $namaToko   = $p->produk->toko->nama_toko;
+    $foto  = $p->produk->foto ? asset('storage/'.$p->produk->foto) : null;
+    // Aturan "bisa dipesan" sama dengan PesananController@create/store
+    $tersedia = $p->status === 'aktif' && $p->stok > 0 && $p->waktu_mulai->lte(now()) && $p->batas_pengambilan->gt(now());
 @endphp
-<article class="kartu" data-cari="{{ strtolower($p->nama.' '.$namaToko) }}">
-    <div class="kartu__gambar">
-        <img src="{{ $foto }}" alt="{{ $p->nama }}" loading="lazy">
-        <span class="chip">Ambil sebelum {{ $tampilTanggal ? $batas->translatedFormat('j M, H:i') : $batas->format('H:i') }}</span>
+<article class="kartu" data-cari="{{ mb_strtolower($namaProduk.' '.$namaToko) }}">
+    <div class="kartu__gambar {{ $foto ? '' : 'kartu__gambar--kosong' }}">
+        @if ($foto) <img src="{{ $foto }}" alt="{{ $namaProduk }}" loading="lazy"> @endif
+        <span class="chip">Ambil sebelum {{ $tampilTanggal ? $p->batas_pengambilan->translatedFormat('j M, H:i') : $p->batas_pengambilan->format('H:i') }}</span>
     </div>
     <div class="kartu__isi">
-        <h3>{{ $p->nama }}</h3>
+        <h3>{{ $namaProduk }}</h3>
         <p class="teks-lembut">{{ $namaToko }}</p>
         <p class="harga">
-            <s>Rp {{ number_format($p->harga_normal, 0, ',', '.') }}</s>
+            <s>Rp {{ number_format($p->produk->harga_normal, 0, ',', '.') }}</s>
             <strong>Rp {{ number_format($p->harga_diskon, 0, ',', '.') }}</strong>
         </p>
         <p>Sisa: <strong>{{ $p->stok }}</strong></p>
         <div class="kartu__aksi">
-            <a href="{{ route('penawaran.show', $p->id) }}" class="btn btn--garis">Detail</a>
-            <a href="{{ route('pesanan.create', ['penawaran' => $p->id]) }}"
-               class="btn btn--utama {{ $tersedia ? '' : 'btn--nonaktif' }}">{{ $tersedia ? 'Pesan' : 'Habis' }}</a>
+            <a href="{{ route('penawaran.show', $p->penawaran_id) }}" class="btn btn--garis">Detail</a>
+            @if ($tersedia)
+                <a href="{{ route('pesanan.create', ['penawaran_id' => $p->penawaran_id]) }}" class="btn btn--utama">Pesan</a>
+            @else
+                <span class="btn btn--utama btn--nonaktif">Tidak tersedia</span>
+            @endif
         </div>
     </div>
 </article>

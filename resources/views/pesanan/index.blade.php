@@ -1,71 +1,48 @@
-@extends('layouts.app')
-
-@section('content')
-    <h1>Pesanan</h1>
-
-    @if(auth()->user()->peran === 'buyer')
-        <a href="{{ route('pesanan.create') }}">Buat pesanan</a>
+{{--
+    Daftar pesanan. Backend (PesananController@index): $items (paginator Pesanan dengan penawaran.produk.toko & pembeli).
+    Pembeli melihat pesanannya sendiri; penjual melihat pesanan untuk tokonya.
+--}}
+@extends('layouts.dayo')
+@section('judul', 'Pesanan')
+@section('konten')
+@php
+    $penjual = auth()->user()->peran === 'seller';
+    $label = ['pending' => 'Menunggu', 'siap_diambil' => 'Siap diambil', 'selesai' => 'Selesai', 'dibatalkan' => 'Dibatalkan', 'kadaluwarsa' => 'Kedaluwarsa'];
+@endphp
+<div class="judul-baris">
+    <h1 class="judul-halaman">{{ $penjual ? 'Pesanan Masuk' : 'Pesanan Saya' }}</h1>
+    @if (! $penjual)
+        <a href="{{ route('pesanan.create') }}" class="btn btn--utama">Buat Pesanan</a>
     @endif
-
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Produk</th>
-                    <th>Pembeli</th>
-                    <th>Jumlah</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @forelse($items as $item)
-                    <tr>
-                        <td>{{ $item->pesanan_id }}</td>
-                        <td>{{ $item->penawaran->produk->nama_produk }}</td>
-                        <td>{{ $item->pembeli->nama }}</td>
-                        <td>{{ $item->jumlah }}</td>
-                        <td>
-                            Rp{{ number_format($item->total_harga, 2, ',', '.') }}
-                        </td>
-                        <td>{{ $item->status }}</td>
-                        <td>
-                            <a href="{{ route('pesanan.show', $item->pesanan_id) }}">
-                                Detail
-                            </a>
-
-                            @if(in_array($item->status, ['pending', 'siap_diambil'], true))
-                                <a href="{{ route('pesanan.edit', $item->pesanan_id) }}">
-                                    Kelola
-                                </a>
-                            @endif
-
-                            @if($item->status === 'dibatalkan')
-                                <form
-                                    class="inline"
-                                    method="POST"
-                                    action="{{ route('pesanan.destroy', $item->pesanan_id) }}"
-                                    onsubmit="return confirm('Hapus pesanan dibatalkan ini?')"
-                                >
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit">Hapus</button>
-                                </form>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">Belum ada pesanan.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{ $items->links() }}
+</div>
+<div class="tabel-bungkus">
+    <table class="tabel">
+        <thead><tr><th>No.</th><th>Produk</th><th>Toko</th>@if ($penjual)<th>Pembeli</th>@endif<th>Jumlah</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody>
+        @forelse ($items as $o)
+            <tr>
+                <td>#{{ $o->pesanan_id }}</td>
+                <td>{{ $o->penawaran->produk->nama_produk }}</td>
+                <td>{{ $o->penawaran->produk->toko->nama_toko }}</td>
+                @if ($penjual)<td>{{ $o->pembeli->nama }}</td>@endif
+                <td>{{ $o->jumlah }}</td>
+                <td>Rp {{ number_format($o->total_harga, 0, ',', '.') }}</td>
+                <td><span class="badge badge--{{ $o->status }}">{{ $label[$o->status] ?? $o->status }}</span></td>
+                <td><div class="aksi-baris">
+                    <a href="{{ route('pesanan.show', $o->pesanan_id) }}" class="btn btn--garis btn--kecil">Detail</a>
+                    @if (in_array($o->status, ['pending', 'siap_diambil'], true))
+                        <a href="{{ route('pesanan.edit', $o->pesanan_id) }}" class="btn btn--garis btn--kecil">Kelola</a>
+                    @endif
+                    @if ($o->status === 'dibatalkan')
+                        <x-tombol-hapus :action="route('pesanan.destroy', $o->pesanan_id)" pesan="Hapus pesanan dibatalkan ini?" />
+                    @endif
+                </div></td>
+            </tr>
+        @empty
+            <tr><td colspan="{{ $penjual ? 8 : 7 }}" class="teks-lembut">Belum ada pesanan.</td></tr>
+        @endforelse
+        </tbody>
+    </table>
+</div>
+{{ $items->links('vendor.pagination.dayo') }}
 @endsection
