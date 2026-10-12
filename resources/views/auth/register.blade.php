@@ -1,0 +1,4 @@
+@extends('layouts.app')
+@section('content')
+<h1>Daftar akun</h1><form class="form" method="POST" action="{{ route('register') }}">@csrf
+<label>Nama<input name="name" value="{{ old('name') }}" required maxlength="100"></label><label>Peran<select name="peran"><option value="pembeli" @selected(old('peran')==='pembeli')>Pembeli</option><option value="penjual" @selected(old('peran')==='penjual')>Penjual</option></select></label><label>Email<input type="email" name="email" value="{{ old('email') }}" required></label><label>Password<input type="password" name="password" required minlength="8"></label><label>Konfirmasi password<input type="password" name="password_confirmation" required></label><button>Simpan</button></form>@endsection

@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('content')<h1>{{ $item ? 'Kelola pesanan' : 'Buat pesanan' }}</h1><form class="form" method="POST" action="{{ $item ? route('pesanan.update',$item->id) : route('pesanan.store') }}">@csrf @if($item) @method('PUT') @endif
+@if(!$item)<label>Penawaran<select name="penawaran_id" required>@foreach($offers as $offer)<option value="{{ $offer->id }}" @selected((string)old('penawaran_id',$selected)===(string)$offer->id)>{{ $offer->produk->nama_produk }} — {{ $offer->produk->toko->nama_toko }} — Rp{{ number_format($offer->harga_diskon) }} — stok {{ $offer->stok }}</option>@endforeach</select></label><input type="hidden" name="status" value="menunggu">
+@else<p>{{ $item->penawaran->produk->nama_produk }}</p><label>Status<select name="status">@if(auth()->user()->peran==='pembeli')<option value="menunggu">Ubah jumlah</option>@else<option value="selesai">Selesai / sudah dibayar dan diambil</option>@endif<option value="dibatalkan">Batalkan</option></select></label>@endif
+@if(!$item || auth()->user()->peran==='pembeli')<label>Jumlah<input type="number" name="jumlah" min="1" max="100000" value="{{ old('jumlah',$item?->jumlah ?? 1) }}" required></label>@endif
+<p>Pembayaran dilakukan saat pengambilan. Total dihitung oleh server.</p><button>Simpan</button></form>@endsection

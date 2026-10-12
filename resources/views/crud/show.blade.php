@@ -1,0 +1,2 @@
+@extends('layouts.app')
+@section('content')<h1>Detail {{ $resource }} #{{ $item->id }}</h1><dl>@foreach($fields as $field=>$type)<dt>{{ ucwords(str_replace('_',' ',$field)) }}</dt><dd>{{ $item->$field }}</dd>@endforeach</dl><a href="{{ route($resource.'.index') }}">Kembali</a>@endsection
